@@ -1,0 +1,82 @@
+#!/bin/bash
+# Version: 0.1
+# Licence: GPL 2.0
+# Author: Alexandr theg4sh Kondratev
+# EMail: bash -c 'ABS=( "sh" "\\x`bc<<<"2^2"`0" "theg" 4 "il" ".com\n" "gma" ); for i in $@; do echo -e -n "${ABS[$i]}"; done' -- 2 3 0 1 6 4 5
+#
+# Examples
+# bgctl -P SSHTUNNEL   -p /tmp/.overvpn_tunnel.pid $BGCTL_OPTS -- /usr/bin/ssh -f -N -R 127.0.0.1:10022:10.0.0.5:22 username@192.168.1.1
+# bgctl -P OPENCONNECT      $BGCTL_OPTS -- openconnect -b --no-cert-check openconnect.mycompany.com 
+#
+
+function :bgctl_getpid() {
+	local PID=$(find /proc -mindepth 2 -maxdepth 2 -name "environ" -exec grep -H "$1=1" "{}" \; | cut -d/ -f3)
+	echo "$PID"; test -n "$PID"; return $!;
+}
+
+function :bgctl_usage() {
+cat <<EOF
+usage: bgctl [-m marker] [-p pidfile] [-P prefix] [-k] -- <cmd> <cmd-args>
+EOF
+}
+
+function bgctl() {
+	local BGCTLPREFIX=""
+	local PROCMARK=""
+	local PROCPIDFILE=""
+	local ACTION="start"
+
+	while test ${#} -gt 0; do
+	 case "$1" in
+	  -P) BGCTLPREFIX=$2; shift; ;;
+	  -m) PROCMARK=$2;    shift; ;;
+	  -p) PROCPIDFILE=$2; shift; ;;
+	  -k) ACTION="stop";  ;;
+
+	  --) shift; break; ;;
+	  *) :bgctl_usage >&2 ;
+	     return 1;
+	  ;;
+	 esac
+	 shift;
+	done
+
+	[ -z "$*" ] && :bgctl_usage >&2 && return 1;
+	[ -z "$PROCMARK" ] && PROCMARK=$(md5sum <<<"$*" | cut -d\  -f1)
+	[ -n "$BGCTLPREFIX" ] && PROCMARK="${BGCTLPREFIX}_${PROCMARK}"
+	[ -z "$PROCPIDFILE" ] && PROCPIDFILE="/tmp/.${PROCMARK}.pid"
+	local PID=$(:bgctl_getpid $PROCMARK)
+
+	case "$ACTION" in
+	start) if ! test "$PID"; then
+	    env $PROCMARK=1 $@ && \
+		    :bgctl_getpid $PROCMARK > ${PROCPIDFILE};
+	  fi ;;
+
+	stop)  if test "$PID"; then
+	    kill ${PID};
+	    rm -f "${PROCPIDFILE}";
+	  fi ;;
+
+	*) :bgctl_usage >&2 ; return 1; ;;
+	esac
+}
+
+BGCTL_OPTS=""
+if [ -n "$1" ]; then
+	case "$1" in
+	start) ;;
+	stop)  BGCTL_OPTS="-k"; ;;
+	*)
+	  echo "usage: $0 [stop]"
+	  exit 1;
+	esac
+fi
+
+
+### Custom code ###
+
+# Place for your daemons
+
+### End custom code ###
+# vim: sw=2 ts=2 et
