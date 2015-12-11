@@ -17,12 +17,13 @@ bgctl [-m marker] [-p pidfile] [-P prefix] [-k] -- <cmd> [cmd-args]
 ```
 
 ##### Arguments description:
-`-P <prefix>`      - prefix used for processes grouping. Default: <empty>
-`-m <marker>`      - used to by default it initialized with md5 hash of "<cmd> [cmd-args]".
+`-P <prefix>      - prefix used for processes grouping. Default: <empty>
+-m <marker>      - used to by default it initialized with md5 hash of "<cmd> [cmd-args]".
                      A <marker> initialized with prefix "<prefix>_" if <prefix> isn't empty.
-`-p <pidfile>`     - file to save PID of watched process. Default: /tmp/.<marker>.pid
-`-k`               - kill the forked process. 
-`--`               - tell to bgctl stop parsing arguments.
+-p <pidfile>     - file to save PID of watched process. Default: /tmp/.<marker>.pid
+-k               - kill the forked process. 
+--               - tell to bgctl stop parsing arguments.
+`
 
 ### Usage examples
 Control ssh with -f argument
